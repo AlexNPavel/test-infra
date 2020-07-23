@@ -1996,3 +1996,47 @@ func TestUpdateTitleBugID(t *testing.T) {
 		}
 	}
 }
+
+func TestIsBugAllowed(t *testing.T) {
+	testCases := []struct {
+		name     string
+		bug      *bugzilla.Bug
+		groups   []string
+		expected bool
+	}{
+		{
+			name:     "no groups configured means always allowed",
+			groups:   []string{},
+			expected: true,
+		},
+		{
+			name: "all groups matching is allowed",
+			bug: &bugzilla.Bug{
+				Groups: []string{"whoa", "really", "cool"},
+			},
+			groups:   []string{"whoa", "really", "cool"},
+			expected: true,
+		},
+		{
+			name: "some but not all groups matching is not allowed",
+			bug: &bugzilla.Bug{
+				Groups: []string{"whoa", "really", "cool"},
+			},
+			groups:   []string{"whoa", "really"},
+			expected: false,
+		},
+		{
+			name: "no groups matching is not allowed",
+			bug: &bugzilla.Bug{
+				Groups: []string{"whoa", "really", "cool"},
+			},
+			groups:   []string{"other"},
+			expected: false,
+		},
+	}
+	for _, testCase := range testCases {
+		if actual, expected := isBugAllowed(testCase.bug, testCase.groups), testCase.expected; actual != expected {
+			t.Errorf("%s: isBugAllowed returned %v incorrectly", testCase.name, actual)
+		}
+	}
+}
